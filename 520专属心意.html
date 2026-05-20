@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:title" content="520快乐，送你一份心意 ❤️">
+    <meta property="og:description" content="点击查收你的专属祝福">
+    <title>520专属心意</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+        .card {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px 30px;
+            max-width: 360px;
+            width: 100%;
+        }
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #fff;
+            margin: 0 auto 20px;
+            font-size: 40px;
+            line-height: 80px;
+        }
+        .title { font-size: 24px; margin-bottom: 10px; }
+        .subtitle { font-size: 16px; opacity: 0.9; margin-bottom: 30px; }
+        .btn {
+            display: inline-block;
+            background: #fff;
+            color: #ff6b6b;
+            padding: 14px 40px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: bold;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+        }
+        .footer { margin-top: 30px; font-size: 12px; opacity: 0.7; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="avatar">🎁</div>
+        <div class="title">520 快乐 ❤️</div>
+        <div class="subtitle">你是今天第 <span id="count">??</span> 位收到祝福的人</div>
+        <button class="btn" onclick="showWish()">打开心意</button>
+        <p id="wish" style="margin-top:20px; font-size:18px;"></p>
+    </div>
+    <div class="footer">一份来自朋友的节日祝福 · 不涉及任何商业行为</div>
+
+    <script>
+        // 随机显示一个序号（本地随机，无后端）
+        document.getElementById('count').innerText = Math.floor(Math.random() * 5000 + 100);
+
+        const wishes = [
+            '愿你有人爱，有事做，有所期待 💫',
+            '所有的浪漫，你都值得 🌹',
+            '别急，对的人正在路上 🚶',
+            '先爱自己，再爱世界 ✨',
+            '今天记得给自己买份好吃的 🍰'
+        ];
+
+        function showWish() {
+            const w = wishes[Math.floor(Math.random() * wishes.length)];
+            document.getElementById('wish').innerText = w;
+        }
+    </script>
+</body>
+</html>
