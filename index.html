@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:title" content="520专属诗句 | 输入名字领取你的诗">
+    <meta property="og:description" content="输入一个名字，生成一句只属于你的古老诗句。">
+    <title>520 专属诗句</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+        .card {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 35px 25px;
+            max-width: 420px;
+            width: 100%;
+            transition: transform 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: #fff;
+            margin: 0 auto 15px;
+            font-size: 36px;
+            line-height: 70px;
+        }
+        .title { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
+        .subtitle { font-size: 14px; opacity: 0.85; margin-bottom: 22px; }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .input-name {
+            flex: 1;
+            min-width: 160px;
+            padding: 14px 18px;
+            border-radius: 50px;
+            border: 2px solid rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            font-family: inherit;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .input-name::placeholder {
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
+        }
+        .input-name:focus {
+            border-color: #fff;
+            background: rgba(255,255,255,0.22);
+            box-shadow: 0 0 12px rgba(255,255,255,0.3);
+        }
+        .input-name.shake {
+            animation: shake 0.4s ease;
+        }
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            50% { transform: translateX(6px); }
+            75% { transform: translateX(-4px); }
+        }
+        .btn {
+            background: #fff;
+            color: #ff6b6b;
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            transition: transform 0.1s, box-shadow 0.2s, background 0.2s;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+        .btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .btn:hover {
+            background: #fff7f7;
+        }
+        .result-box {
+            margin-top: 10px;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s ease;
+        }
+        .result-box.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .result-poem {
+            font-size: 21px;
+            font-weight: bold;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+            line-height: 1.5;
+        }
+        .result-from {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 2px;
+        }
+        .result-tag {
+            display: inline-block;
+            background: rgba(255,255,255,0.25);
+            border-radius: 12px;
+            padding: 2px 12px;
+            font-size: 11px;
+            opacity: 0.85;
+            margin-bottom: 6px;
+        }
+        .result-insight {
+            font-size: 13px;
+            opacity: 0.75;
+            margin-top: 4px;
+            font-style: italic;
+        }
+        .result-match-char {
+            background: rgba(255,255,255,0.3);
+            border-radius: 8px;
+            padding: 1px 8px;
+            font-weight: bold;
+            display: inline-block;
+            margin: 0 2px;
+        }
+        .divider {
+            width: 40px;
+            height: 2px;
+            background: rgba(255,255,255,0.4);
+            margin: 12px auto;
+            border-radius: 1px;
+        }
+        .small-link {
+            display: inline-block;
+            margin-top: 16px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: underline;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .small-link:hover {
+            color: #fff;
+        }
+        .footer { margin-top: 25px; font-size: 12px; opacity: 0.7; }
+
+        /* 花瓣 */
+        .petal {
+            position: fixed;
+            top: -40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            pointer-events: none;
+            z-index: 0;
+            animation: fall linear infinite;
+        }
+        @keyframes fall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(105vh) rotate(360deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 飘落花瓣 -->
+    <div id="petalsContainer"></div>
+
+    <div class="card" id="card">
+        <div class="avatar" id="avatarIcon">📜</div>
+        <div class="title">520 专属诗句</div>
+        <div class="subtitle">输入名字，领取一句因你而生的诗</div>
+
+        <div class="input-group">
+            <input
+                class="input-name"
+                id="nameInput"
+                type="text"
+                placeholder="输入你的名字（或你和TA的名字）"
+                maxlength="20"
+                autocomplete="off"
+            />
+            <button class="btn" onclick="generatePoem()">✨ 生成诗句</button>
+        </div>
+
+        <div class="result-box" id="resultBox">
+            <p class="result-poem" id="resultPoem"></p>
+            <p class="result-from" id="resultFrom"></p>
+            <span class="result-tag" id="resultTag" style="display:none;"></span>
+            <p class="result-insight" id="resultInsight"></p>
+        </div>
+
+        <span class="small-link" onclick="randomPoem()">🎲 不想输入？点我看随机祝福</span>
+    </div>
+
+    <div class="footer">一份来自朋友的节日祝福 · 不涉及任何商业行为</div>
+
+    <script>
+        // ==================== 花瓣特效 ====================
+        (function createPetals() {
+            const container = document.getElementById('petalsContainer');
+            const colors = ['rgba(255,255,255,0.55)', 'rgba(255,200,200,0.5)', 'rgba(255,180,180,0.45)', 'rgba(255,220,220,0.5)'];
+            for (let i = 0; i < 18; i++) {
+                const petal = document.createElement('div');
+                petal.className = 'petal';
+                const size = Math.random() * 10 + 5;
+                petal.style.width = size + 'px';
+                petal.style.height = size + 'px';
+                petal.style.left = Math.random() * 100 + '%';
+                petal.style.background = colors[Math.floor(Math.random() * colors.length)];
+                petal.style.animationDuration = (Math.random() * 8 + 10) + 's';
+                petal.style.animationDelay = (Math.random() * 8) + 's';
+                container.appendChild(petal);
+            }
+        })();
+
+        // ==================== 随机头像 ====================
+        const avatars = ['📜', '💝', '🌹', '💌', '🕊️', '✨', '🌸', '💫', '🎀', '❤️', '🫶', '💐', '🪷'];
+        document.getElementById('avatarIcon').innerText = avatars[Math.floor(Math.random() * avatars.length)];
+
+        // ==================== 100 句祝福语库 ====================
+        const wishes = [
+            // 古诗词·爱情 (40句)
+            { poem: '愿得一心人，白头不相离', text: '—— 卓文君《白头吟》', tag: '古诗' },
+            { poem: '山有木兮木有枝，心悦君兮君不知', text: '—— 《越人歌》', tag: '古诗' },
+            { poem: '曾经沧海难为水，除却巫山不是云', text: '—— 元稹《离思》', tag: '古诗' },
+            { poem: '两情若是久长时，又岂在朝朝暮暮', text: '—— 秦观《鹊桥仙》', tag: '古诗' },
+            { poem: '执子之手，与子偕老', text: '—— 《诗经·邶风》', tag: '古诗' },
+            { poem: '在天愿作比翼鸟，在地愿为连理枝', text: '—— 白居易《长恨歌》', tag: '古诗' },
+            { poem: '身无彩凤双飞翼，心有灵犀一点通', text: '—— 李商隐《无题》', tag: '古诗' },
+            { poem: '玲珑骰子安红豆，入骨相思知不知', text: '—— 温庭筠《南歌子》', tag: '古诗' },
+            { poem: '只愿君心似我心，定不负相思意', text: '—— 李之仪《卜算子》', tag: '古诗' },
+            { poem: '金风玉露一相逢，便胜却人间无数', text: '—— 秦观《鹊桥仙》', tag: '古诗' },
+            { poem: '问世间情为何物，直教生死相许', text: '—— 元好问《摸鱼儿》', tag: '古诗' },
+            { poem: '天涯地角有穷时，只有相思无尽处', text: '—— 晏殊《玉楼春》', tag: '古诗' },
+            { poem: '愿我如星君如月，夜夜流光相皎洁', text: '—— 范成大《车遥遥篇》', tag: '古诗' },
+            { poem: '得成比目何辞死，愿作鸳鸯不羡仙', text: '—— 卢照邻《长安古意》', tag: '古诗' },
+            { poem: '死生契阔，与子成说', text: '—— 《诗经·邶风》', tag: '古诗' },
+            { poem: '相思相见知何日，此时此夜难为情', text: '—— 李白《三五七言》', tag: '古诗' },
+            { poem: '衣带渐宽终不悔，为伊消得人憔悴', text: '—— 柳永《蝶恋花》', tag: '古诗' },
+            { poem: '君当作磐石，妾当作蒲苇', text: '—— 《孔雀东南飞》', tag: '古诗' },
+            { poem: '此情可待成追忆，只是当时已惘然', text: '—— 李商隐《锦瑟》', tag: '古诗' },
+            { poem: '平生不会相思，才会相思，便害相思', text: '—— 徐再思《折桂令》', tag: '古诗' },
+            { poem: '相见时难别亦难，东风无力百花残', text: '—— 李商隐《无题》', tag: '古诗' },
+            { poem: '春蚕到死丝方尽，蜡炬成灰泪始干', text: '—— 李商隐《无题》', tag: '古诗' },
+            { poem: '日日思君不见君，共饮长江水', text: '—— 李之仪《卜算子》', tag: '古诗' },
+            { poem: '月上柳梢头，人约黄昏后', text: '—— 欧阳修《生查子》', tag: '古诗' },
+            { poem: '众里寻他千百度，蓦然回首，那人却在灯火阑珊处', text: '—— 辛弃疾《青玉案》', tag: '古诗' },
+            { poem: '十年生死两茫茫，不思量，自难忘', text: '—— 苏轼《江城子》', tag: '古诗' },
+            { poem: '柔情似水，佳期如梦', text: '—— 秦观《鹊桥仙》', tag: '古诗' },
+            { poem: '红豆生南国，春来发几枝', text: '—— 王维《相思》', tag: '古诗' },
+            { poem: '思君如满月，夜夜减清辉', text: '—— 张九龄《赋得自君之出矣》', tag: '古诗' },
+            { poem: '落红不是无情物，化作春泥更护花', text: '—— 龚自珍《己亥杂诗》', tag: '古诗' },
+            { poem: '多情只有春庭月，犹为离人照落花', text: '—— 张泌《寄人》', tag: '古诗' },
+            { poem: '人面不知何处去，桃花依旧笑春风', text: '—— 崔护《题都城南庄》', tag: '古诗' },
+            { poem: '换我心，为你心，始知相忆深', text: '—— 顾夐《诉衷情》', tag: '古诗' },
+            { poem: '此去经年，应是良辰好景虚设', text: '—— 柳永《雨霖铃》', tag: '古诗' },
+            { poem: '一寸相思千万绪，人间没个安排处', text: '—— 李冠《蝶恋花》', tag: '古诗' },
+            { poem: '山无陵，江水为竭，冬雷震震，夏雨雪，天地合，乃敢与君绝', text: '—— 《上邪》', tag: '古诗' },
+            { poem: '深知身在情长在，怅望江头江水声', text: '—— 李商隐《暮秋独游曲江》', tag: '古诗' },
+            { poem: '一场寂寞凭谁诉，算前言，总轻负', text: '—— 柳永《昼夜乐》', tag: '古诗' },
+            { poem: '梧桐树，三更雨，不道离情正苦', text: '—— 温庭筠《更漏子》', tag: '古诗' },
+            { poem: '若有知音见采，不辞遍唱阳春', text: '—— 晏殊《山亭柳》', tag: '古诗' },
+            // 现代诗·情话 (20句)
+            { poem: '春风十里不如你', text: '—— 冯唐', tag: '现代诗' },
+            { poem: '世间安得双全法，不负如来不负卿', text: '—— 仓央嘉措', tag: '现代诗' },
+            { poem: '你见，或者不见我，我就在那里', text: '—— 仓央嘉措', tag: '现代诗' },
+            { poem: '我行过许多地方的桥，却只爱过一个正当最好年龄的人', text: '—— 沈从文', tag: '现代诗' },
+            { poem: '海底月是天上月，眼前人是心上人', text: '—— 张爱玲', tag: '现代诗' },
+            { poem: '今晚月色真美', text: '—— 夏目漱石', tag: '现代诗' },
+            { poem: '你是人间四月天', text: '—— 林徽因', tag: '现代诗' },
+            { poem: '从前车马慢，一生只够爱一个人', text: '—— 木心《从前慢》', tag: '现代诗' },
+            { poem: '草在结它的种子，风在摇它的叶子，我们站着不说话就十分美好', text: '—— 顾城', tag: '现代诗' },
+            { poem: '你来人间一趟，你要看看太阳，和你的心上人一起走在街上', text: '—— 海子', tag: '现代诗' },
+            { poem: '我放下过天地，却从未放下过你', text: '—— 仓央嘉措', tag: '现代诗' },
+            { poem: '陌上花开，可缓缓归矣', text: '—— 钱镠', tag: '现代诗' },
+            { poem: '你微微地笑着，不同我说什么话，而我觉得为了这个我已等待很久了', text: '—— 泰戈尔', tag: '现代诗' },
+            { poem: '眼睛为她下着雨，心却为她打着伞', text: '—— 泰戈尔', tag: '现代诗' },
+            { poem: '答案很长，我准备用一生的时间来回答', text: '—— 林徽因', tag: '现代诗' },
+            { poem: '白茶清欢无别事，我在等风也等你', text: '—— 佚名', tag: '现代诗' },
+            { poem: '所有的相遇，都是久别重逢', text: '—— 佚名', tag: '现代诗' },
+            { poem: '最是人间留不住，朱颜辞镜花辞树', text: '—— 王国维', tag: '现代诗' },
+            { poem: '我爱你，不光因为你的样子，还因为和你在一起时我的样子', text: '—— 罗伊·克里夫特', tag: '现代诗' },
+            { poem: '一生至少该有一次，为了某个人而忘了自己', text: '—— 徐志摩', tag: '现代诗' },
+            // 哲理·人生 (20句)
+            { poem: '万物皆有裂痕，那是光照进来的地方', text: '—— 莱昂纳德·科恩', tag: '哲理' },
+            { poem: '世上只有一种英雄主义，就是看清生活真相之后依然热爱生活', text: '—— 罗曼·罗兰', tag: '哲理' },
+            { poem: '人生如逆旅，我亦是行人', text: '—— 苏轼', tag: '哲理' },
+            { poem: '此心安处是吾乡', text: '—— 苏轼', tag: '哲理' },
+            { poem: '人间有味是清欢', text: '—— 苏轼', tag: '哲理' },
+            { poem: '竹杖芒鞋轻胜马，谁怕？一蓑烟雨任平生', text: '—— 苏轼', tag: '哲理' },
+            { poem: '采菊东篱下，悠然见南山', text: '—— 陶渊明', tag: '哲理' },
+            { poem: '每一个不曾起舞的日子，都是对生命的辜负', text: '—— 尼采', tag: '哲理' },
+            { poem: '世界以痛吻我，要我报之以歌', text: '—— 泰戈尔', tag: '哲理' },
+            { poem: '非淡泊无以明志，非宁静无以致远', text: '—— 诸葛亮', tag: '哲理' },
+            { poem: '山重水复疑无路，柳暗花明又一村', text: '—— 陆游', tag: '哲理' },
+            { poem: '沉舟侧畔千帆过，病树前头万木春', text: '—— 刘禹锡', tag: '哲理' },
+            { poem: '长风破浪会有时，直挂云帆济沧海', text: '—— 李白', tag: '哲理' },
+            { poem: '天生我材必有用，千金散尽还复来', text: '—— 李白', tag: '哲理' },
+            { poem: '路漫漫其修远兮，吾将上下而求索', text: '—— 屈原', tag: '哲理' },
+            { poem: '天行健，君子以自强不息', text: '—— 《周易》', tag: '哲理' },
+            { poem: '宝剑锋从磨砺出，梅花香自苦寒来', text: '—— 佚名', tag: '哲理' },
+            { poem: '不经一番寒彻骨，怎得梅花扑鼻香', text: '—— 黄檗禅师', tag: '哲理' },
+            { poem: '盛年不重来，一日难再晨', text: '—— 陶渊明', tag: '哲理' },
+            { poem: '海内存知己，天涯若比邻', text: '—— 王勃', tag: '哲理' },
+            // 温暖·祝福 (20句)
+            { poem: '愿你有人爱，有事做，有所期待', text: '✨ 这世界总有一盏灯为你而亮', tag: '祝福' },
+            { poem: '所有的浪漫，你都值得', text: '🌹 今天记得给自己买束花', tag: '祝福' },
+            { poem: '别急，对的人正在路上', text: '🚶 在他来之前，请替我们照顾好自己', tag: '祝福' },
+            { poem: '先爱自己，再爱世界', text: '💖 你是自己人生的主角', tag: '祝福' },
+            { poem: '今天记得给自己买份好吃的', text: '🍰 生活很苦，但你很甜', tag: '祝福' },
+            { poem: '你值得被温柔以待', text: '🌸 无论今天有没有人陪你', tag: '祝福' },
+            { poem: '爱不是占有，是彼此照亮', text: '💡 愿你成为自己的光', tag: '祝福' },
+            { poem: '幸福不是什么都拥有，而是想要的恰好在身边', text: '🏠 珍惜当下，即是圆满', tag: '祝福' },
+            { poem: '今天允许你做一个幸福的人', text: '🌞 喂马、劈柴、周游世界……先从吃顿好的开始', tag: '祝福' },
+            { poem: '愿你出走半生，归来仍是少年', text: '🧒 保持热爱，奔赴山海', tag: '祝福' },
+            { poem: '520，别忘了爱自己', text: '🫂 你是独一无二的存在', tag: '祝福' },
+            { poem: '愿你被这个世界温柔以待', text: '💫 即使生命总以刻薄荒芜相欺', tag: '祝福' },
+            { poem: '莫愁前路无知己，天下谁人不识君', text: '—— 高适《别董大》', tag: '祝福' },
+            { poem: '仰天大笑出门去，我辈岂是蓬蒿人', text: '—— 李白', tag: '祝福' },
+            { poem: '心安即是归处', text: '🏡 愿你心有栖息之地', tag: '祝福' },
+            { poem: '花看半开，酒饮微醺', text: '🍶 凡事留有余地，才是最好的状态', tag: '祝福' },
+            { poem: '今天的好心情是限定的', text: '🌈 请及时查收', tag: '祝福' },
+            { poem: '种一棵树最好的时间是十年前，其次是现在', text: '🌳 想做就去做，永远不晚', tag: '祝福' },
+            { poem: '温柔是宝藏，你也是', text: '💎 愿你永远被珍惜', tag: '祝福' },
+            { poem: '慢慢来，会好的', text: '🌿 生活总会给你不期而遇的温暖', tag: '祝福' },
+        ];
+
+        // ==================== 构建反向索引（字符 → 诗句索引数组） ====================
+        const charIndex = {};
+        wishes.forEach((wish, idx) => {
+            // 合并诗句和出处，只保留中文字符
+            const combined = (wish.poem + wish.text).replace(/[^\u4e00-\u9fa5]/g, '');
+            const chars = new Set(combined.split(''));
+            chars.forEach(ch => {
+                if (!charIndex[ch]) charIndex[ch] = [];
+                charIndex[ch].push(idx);
+            });
+        });
+
+        // ==================== 核心匹配函数 ====================
+        function matchName(name) {
+            if (!name || name.trim().length === 0) return null;
+            name = name.trim();
+
+            // 取最后一个中文字符
+            let char = '';
+            for (let i = name.length - 1; i >= 0; i--) {
+                if (/[\u4e00-\u9fa5]/.test(name[i])) {
+                    char = name[i];
+                    break;
+                }
+            }
+            // 如果没找到中文，取第一个字符（英文名场景）
+            if (!char) char = name[0];
+
+            let indices = charIndex[char];
+            let matched = false;
+            let matchedChar = char;
+
+            // 如果最后一个字没匹配到，尝试第一个字
+            if (!indices || indices.length === 0) {
+                let firstChar = '';
+                for (let i = 0; i < name.length; i++) {
+                    if (/[\u4e00-\u9fa5]/.test(name[i])) {
+                        firstChar = name[i];
+                        break;
+                    }
+                }
+                if (firstChar && firstChar !== char) {
+                    indices = charIndex[firstChar];
+                    matchedChar = firstChar;
+                }
+            }
+
+            if (indices && indices.length > 0) {
+                matched = true;
+                const idx = indices[Math.floor(Math.random() * indices.length)];
+                return { wish: wishes[idx], matchedChar, matched };
+            } else {
+                // 无匹配，根据名字 hash 选一条
+                let hash = 0;
+                for (let i = 0; i < name.length; i++) {
+                    hash = ((hash << 5) - hash) + name.charCodeAt(i);
+                    hash |= 0;
+                }
+                const idx = Math.abs(hash) % wishes.length;
+                return { wish: wishes[idx], matchedChar: null, matched: false };
+            }
+        }
+
+        // ==================== 生成解读文案 ====================
+        function generateInsight(name, matchedChar, matched, isDouble) {
+            if (matched && matchedChar) {
+                const templates = [
+                    `你名字中的「${matchedChar}」字，与这句诗意境相合`,
+                    `「${matchedChar}」——这个字带着诗意，恰如为你而写`,
+                    `诗中有「${matchedChar}」，正如你名字中的韵味`,
+                    `古人笔下的「${matchedChar}」，今天遇见了你`,
+                ];
+                return templates[Math.floor(Math.random() * templates.length)];
+            } else if (!matched) {
+                const templates = [
+                    `你的名字太独特了，我们为你特别挑选了这句`,
+                    `独一无二的名字，配这句独一无二的诗`,
+                    `虽未找到直接关联，但这句诗的气质与你很搭`,
+                ];
+                return templates[Math.floor(Math.random() * templates.length)];
+            }
+            return '';
+        }
+
+        // ==================== 主函数：生成专属诗句 ====================
+        function generatePoem() {
+            const inputEl = document.getElementById('nameInput');
+            const rawName = inputEl.value.trim();
+
+            if (!rawName) {
+                inputEl.classList.add('shake');
+                setTimeout(() => inputEl.classList.remove('shake'), 400);
+                return;
+            }
+
+            // 检测双人名字（分隔符：和、与、&、+、/、,、，、空格）
+            const separators = /[和与&+\/,，\s]+/;
+            const parts = rawName.split(separators).filter(s => s.trim().length > 0);
+
+            let resultHTML = '';
+            let insightText = '';
+
+            if (parts.length >= 2) {
+                // 双人模式
+                const name1 = parts[0].trim();
+                const name2 = parts[1].trim();
+
+                const match1 = matchName(name1);
+                const match2 = matchName(name2);
+
+                // 尝试找交集（同时包含两个匹配字的诗句）
+                let commonIdx = -1;
+                if (match1.matched && match2.matched) {
+                    const idx1 = charIndex[match1.matchedChar];
+                    const idx2 = charIndex[match2.matchedChar];
+                    const common = idx1.filter(i => idx2.includes(i));
+                    if (common.length > 0) {
+                        commonIdx = common[Math.floor(Math.random() * common.length)];
+                    }
+                }
+
+                if (commonIdx !== -1) {
+                    // 缘分诗句：同一句诗同时关联两个人的名字
+                    const w = wishes[commonIdx];
+                    resultHTML = `
+                        <p class="result-poem">${w.poem}</p>
+                        <p class="result-from">${w.text}</p>
+                        <span class="result-tag" style="display:inline-block;">${w.tag}</span>
+                    `;
+                    insightText = `「${name1}」与「${name2}」的名字共同指向这句诗——缘分妙不可言 ✨`;
+                } else {
+                    // 分别显示各自的诗句
+                    const w1 = match1.wish;
+                    const w2 = match2.wish;
+                    resultHTML = `
+                        <p style="font-size:14px;opacity:0.8;margin-bottom:2px;">${name1}的诗句</p>
+                        <p class="result-poem" style="font-size:18px;">${w1.poem}</p>
+                        <p class="result-from">${w1.text}</p>
+                        <span class="result-tag" style="display:inline-block;">${w1.tag}</span>
+                        <div class="divider">❤️</div>
+                        <p style="font-size:14px;opacity:0.8;margin-bottom:2px;">${name2}的诗句</p>
+                        <p class="result-poem" style="font-size:18px;">${w2.poem}</p>
+                        <p class="result-from">${w2.text}</p>
+                        <span class="result-tag" style="display:inline-block;">${w2.tag}</span>
+                    `;
+                    insightText = `两句诗，两个人，一段故事正在开始 🌸`;
+                }
+
+            } else {
+                // 单人模式
+                const name = parts[0];
+                const match = matchName(name);
+                const w = match.wish;
+
+                resultHTML = `
+                    <p class="result-poem">${w.poem}</p>
+                    <p class="result-from">${w.text}</p>
+                    <span class="result-tag" style="display:inline-block;">${w.tag}</span>
+                `;
+                insightText = generateInsight(name, match.matchedChar, match.matched, false);
+            }
+
+            // 渲染结果
+            const resultBox = document.getElementById('resultBox');
+            resultBox.innerHTML = resultHTML + `<p class="result-insight">${insightText}</p>`;
+            resultBox.classList.add('show');
+
+            // 轻弹动画
+            const card = document.getElementById('card');
+            card.style.transform = 'scale(1.02)';
+            setTimeout(() => { card.style.transform = 'scale(1)'; }, 150);
+        }
+
+        // ==================== 随机祝福（保留原功能） ====================
+        function randomPoem() {
+            const w = wishes[Math.floor(Math.random() * wishes.length)];
+            const resultBox = document.getElementById('resultBox');
+            resultBox.innerHTML = `
+                <p class="result-poem">${w.poem}</p>
+                <p class="result-from">${w.text}</p>
+                <span class="result-tag" style="display:inline-block;">${w.tag}</span>
+                <p class="result-insight">随意抽选的诗句，或许也是命运的提示 🌙</p>
+            `;
+            resultBox.classList.add('show');
+            document.getElementById('nameInput').value = '';
+
+            const card = document.getElementById('card');
+            card.style.transform = 'scale(1.02)';
+            setTimeout(() => { card.style.transform = 'scale(1)'; }, 150);
+        }
+
+        // ==================== 回车键触发 ====================
+        document.getElementById('nameInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                generatePoem();
+            }
+        });
+
+        // ==================== 页面加载时显示一句默认祝福 ====================
+        randomPoem();
+    </script>
+</body>
+</html>
